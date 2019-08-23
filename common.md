@@ -43,10 +43,29 @@ ConstraintValidator | 使用注解校验参数
 ### database
 jdbc:mysql 链接可设置 mysql 编码集、时区
 
-#### SqlSessionFactory 
+#### driver
+创建连接的驱动
+#### datasource
+通过 driver 获取连接，能实现更多细节（如连接池）
+
+#### SqlSessionFactory
 创建 mybatis 会话
-#### Datasource
 #### JdbcTemplate
+封装了 connection 获取 statement 并从 statement 获取对象
+#### sqlSession
+缓存了 statement。
+可以获取 mapper 实例
+使用 executor 执行 sql
+#### transaction
+通过 datasource 获取 connection，封装 connection 的操作
+
+#### executor
+构建 statementHandler 类执行 sql
+#### statementHandler
+封装 statement 的执行
+
+#### mapper
+mapper 接口的方法会与 sql 模板绑定，使用动态代理，填充参数后使用 sqlSession 执行
 
 ### Transaction
 #### steps
