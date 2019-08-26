@@ -24,8 +24,19 @@ spring-boot-configuration-processor.jar 使用 @ConfigurationProperties 注解�
 
 Proxy.newProxyInstance(classLoader, interfaces[], invocationHandler) 
 
-
 ---------------
+
+#### beanFactory 持有 bean 的容器
+接口拥有获取 bean 的方法。
+接口实现中拥有持有 bean 的容器。
+对于实现 factoryBean 的接口，会获取它产生的 bean。
+
+#### factoryBean 生产 bean 的工厂
+该工厂本身也是个 bean。
+factoryBean 的 bean 名称拥有特定的前缀 &。
+isSingleton 为 true 时 beanFactory 会存储单例，不再创建新实例。
+beanFactory.getBean（name）, 如果 name 不带该前缀，则返回 factoryBean 生产的 bean。
+（为什么要用单例去生产单例？）
 
 ### network
 
@@ -45,6 +56,10 @@ jdbc:mysql 链接可设置 mysql 编码集、时区
 
 #### driver
 创建连接的驱动
+
+#### connection
+与数据库的连接，事务执行的基本单位，由驱动创建
+
 #### datasource
 通过 driver 获取连接，能实现更多细节（如连接池）
 
@@ -57,15 +72,33 @@ jdbc:mysql 链接可设置 mysql 编码集、时区
 可以获取 mapper 实例
 使用 executor 执行 sql
 #### transaction
-通过 datasource 获取 connection，封装 connection 的操作
+通过 datasource 获取 connection，或者通过构造器传入 connection（不同实现类有不同的实现）。
+封装 connection 的操作。
 
 #### executor
 构建 statementHandler 类执行 sql
+baseExecutor 持有一个 transaction 实例
 #### statementHandler
 封装 statement 的执行
 
+
 #### mapper
 mapper 接口的方法会与 sql 模板绑定，使用动态代理，填充参数后使用 sqlSession 执行
+
+-------------
+    
+    创建 sqlSessionFactory 的 bean；
+    ClassPathMapperScanner 扫描 mapper 的目录，拿到 interface 列表
+    使用单个 mapper 接口和 sqlSessionFactory 构造 MapperFactoryBean
+    注册 mapperFactoryBean
+    注入 mapper 时会获取 mapperFactoryBean 生产的 mapper 实例
+    
+    mapper 通过动态代理实现。
+    获取路径：sqlSession.getMapper -> configuration.getMapper -> 
+        mapperRegistry.getMapper -> mapperProxyFactory.newInstance -> 
+        mapperProxy 动态代理实现
+        
+    mapper 的实现 mapperProxy 与 sqlSession 是绑定的。但是 SqlSessionTemplate 中的 sqlSession 使用了代理，在事务中会使用一个单独的 sqlSession 执行。
 
 ### Transaction
 #### steps
