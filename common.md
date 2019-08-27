@@ -71,9 +71,18 @@ jdbc:mysql 链接可设置 mysql 编码集、时区
 缓存了 statement。
 可以获取 mapper 实例
 使用 executor 执行 sql
+当前线程事务持有的 sqlSessionHolder 放在 TransactionSynchronizationManager.resources 中
+    
+    holder = new SqlSessionHolder(session, executorType, exceptionTranslator);
+    TransactionSynchronizationManager.bindResource(sessionFactory, holder);
+    
+    
 #### transaction
 通过 datasource 获取 connection，或者通过构造器传入 connection（不同实现类有不同的实现）。
 封装 connection 的操作。
+SpringManagedTransaction 在获取连接时访问 
+
+	  ConnectionHolder conHolder = (ConnectionHolder) TransactionSynchronizationManager.getResource(dataSource);
 
 #### executor
 构建 statementHandler 类执行 sql
@@ -98,7 +107,7 @@ mapper 接口的方法会与 sql 模板绑定，使用动态代理，填充参�
         mapperRegistry.getMapper -> mapperProxyFactory.newInstance -> 
         mapperProxy 动态代理实现
         
-    mapper 的实现 mapperProxy 与 sqlSession 是绑定的。但是 SqlSessionTemplate 中的 sqlSession 使用了代理，在事务中会使用一个单独的 sqlSession 执行。
+    mapper 的实现 mapperProxy 持有一个 sqlSession 的引用（代理实现）。每次查询都会代理创建一个新的 sqlSession，在事务中会不同 mapper 共用一个单独的 connection 执行。
 
 ### Transaction
 #### steps
@@ -111,17 +120,67 @@ mapper 接口的方法会与 sql 模板绑定，使用动态代理，填充参�
     
 #### PlatformTransactionManager
 接口：平台事务管理
- DataSourceTransactionManager：jdbc事务管理
+ DataSourceTransactionManager：jdbc事务管理，
+ 
+    方法 doBegin 中
+    if (txObject.isNewConnectionHolder()) {
+	    TransactionSynchronizationManager.bindResource(obtainDataSource(), txObject.getConnectionHolder());
+	}
+	
+	开始事务后，连接会存放在 threadLocal 中，mapper 会使用缓存的 connection 创建新的sqlSession （mapper 持有的 sqlSession 是动态代理，每次执行 sql 都会创建一个可执行的 sqlSession）并执行
 #### TransactionDefinition
 定义事务，Spring 默认实现：DefaultTransactionDefinition
 #### TransactionStatus
-运行事务状态
+事务的状态
 #### TransactionTemplate
+继承 transactionDefinition
 编程式事务处理模板（AOP拦截方法实现提交回滚）
+持有一个 platformTransactionManager
+execute 方法执行传入的 transactionCallback
+
+    执行：
+    callbackPreferringPlatformTransactionManager.execute(transactionDefinition, transactionCallback) 
+    或
+    status = transactionManager.getTransaction(transactionDefinition) ;
+    transactionCallback.doInTransaction(status) ;
+    transactionManager.commit(status)
+    异常时 rollback
 #### TranscationInterceptor
-声明式事务管理
+声明式事务管理，事务拦截器, @Transactional 注解的方法会使用它处理
+    
+    transactionInterceptor.invokeWithinTransaction ->
+    transactionAttribute.getTransactionAttribute ->
+    transactionAttributeSource.getTransactionAttribute ->
+    TransactionAnnotationParser.parseTransactionAnnotation 从@Transactional 注解中获取事务配置
 #### TranscationProxyFactoryBean
 声明式事务管理
+#### TransactionCallback
+事务的任务（具体实现）
+一个 @FuncationInterface 标注的接口
+方法：doInTransaction 传入事务的状态并执行
+    
+    有时候并不一定要管事务的状态，如 io.katharsis.spring.jpa.SpringTransactionRunner 中的代码
+    
+    public <T> T doInTransaction(final Callable<T> callable) {
+        TransactionTemplate template = new TransactionTemplate(this.platformTransactionManager);
+        return template.execute(new TransactionCallback<T>() {
+            public T doInTransaction(TransactionStatus status) {
+                try {
+                    return callable.call();
+                } catch (RuntimeException var3) {
+                    throw var3;
+                } catch (Exception var4) {
+                    throw new IllegalStateException(var4);
+                }
+            }
+        });
+    }
+    
+    #### spring 启动注册 bean 时就会扫描 bean 中的 @Transactional 注解并使用代理
+
+#### @transactional
+有 @transactional 标注的类，会被动态代理增强
+因为 transactionInterceptor 实现 advice 接口并注册成 bean，AbstractAutoProxyCreator 会有将其自动实现代理
 
 ### Statement
 connection.createStatement() 静态 sql
