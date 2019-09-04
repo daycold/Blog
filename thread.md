@@ -141,5 +141,20 @@ ForkJoinWorkerThread 持有一个 ForkJoinPool 的引用，每次 fork 都会将
             ForkJoinWorkerThread 的 run 方法进行了啥操作？(似乎没有操作？）
             工作窃取算法怎么执行的？
         
+## Future
+### RunnableFuture
+extends Future, Runnable
 
+### FutureTask
+ RunnableFuture 的实现
+
+ 持有一个 WaitNode 的链表（任务中可能嵌套多线程任务）
+ 当某个节点抛出异常时，抛出异常
+ 
+ 持有一个 outcome
+ run 方法成功返回会 set outcome
+ 调用 get 的时候，如果 waitNode 有节点没有执行完，调用 yield 阻塞当前线程
+ 通过 get 方法获取结果
+#### WaitNode
+持有一个当前线程的引用 thread 和一个 WaitNode 的引用 next
 
