@@ -38,6 +38,15 @@ isSingleton 为 true 时 beanFactory 会存储单例，不再创建新实例。
 beanFactory.getBean（name）, 如果 name 不带该前缀，则返回 factoryBean 生产的 bean。
 （为什么要用单例去生产单例？）
 
+#### abstractAutoProxyCreator
+实现 BeanPostProcessor，
+对切面类做增强代理。
+如 @transactional 注解所在类
+
+    获取所有实现增强的 bean（TransactionInterceptor，实现了 Advice 接口）
+    普通 bean 在装载时会扫描，判断是否需要增强（拥有@Transactional 注解的类会被 TransactionInterceptor 响应）
+    使用动态代理进行增强
+    
 ### network
 
 className | details
