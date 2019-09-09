@@ -105,7 +105,7 @@ extends AbstractExecutorService
 持有一个 Worker 集合
 #### Worker 内部类
  extends AQS implementes Runnable
- 通过 AQS 实现锁的操作, worker 每次执行任务前加锁，防止被中断（中断需要该线程调用sleep，join，wait 等方法，加锁后该线程不会在其他地方被调用）
+ 通过 AQS 实现锁的操作, worker 每次执行任务前加锁，防止被中断（中断需要该线程调用sleep，join，wait，yield 等方法，加锁后该线程不会在其他地方被调用）
  持有一个 final 的 Thread 和一个可变的 Runnable 引用（使用一个线程执行不同的任务）
  如果一个 worker，getTask() == null， 则会销毁
  对于 getTask（）方法，如果设置为允许核心线程过期，获取线程数大于核心线程数，则会调用阻塞列队的 poll 方法并设置超时时间。当前线程数小于核心线程数，则会调用不过期的 take 方法，保持 worker 不销毁
@@ -158,3 +158,22 @@ extends Future, Runnable
 #### WaitNode
 持有一个当前线程的引用 thread 和一个 WaitNode 的引用 next
 
+## object, thread
+wait: 让出 cpu 和锁（需要 notify 唤醒）
+sleep： 仅让出 cpu
+notify/notifyAll: 唤醒竞争该对象失败而进入 wait 状态的该对象所在的线程
+yield：退出 running，进入 runnable 状态，仅让出 cpu
+join: 一个 synchronized 方法，轮询存活状态并 wait
+
+         while (isAlive()) {
+                long delay = millis - now;
+                if (delay <= 0) {
+                    break;
+                }
+                wait(delay);
+                now = System.currentTimeMillis() - base;
+        }
+        join 方法先被 synchronized 修饰，如果无法获取到该线程的锁则会阻塞。获取到后会查看状态，如果未完成，调用 thread.join 方法的线程释放锁，等待 thread 执行完成将其唤醒。
+        yield 和 sleep 都是 Thread 的静态方法，锁是落在对象上的，因而这两个方法不存在操作锁的方式
+        对于从wait中被notify的进程来说，它在被notify之后还需要重新检查是否符合执行条件，如果不符合，就必须再次被wait，如果符合才能往下执行。所以：wait方法应该使用循环模式来调用
+        thread 在结束是会调用一次 notifyAll，唤醒持有该线程对象所有 wait 的线程
