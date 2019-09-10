@@ -16,3 +16,6 @@
     WeakReference wr = new WeakReference(a); // 创建一个弱引用，该对象有 a, wr 两个引用
     a = null; // 该对象只剩一个弱引用，垃圾回收时会被回收
 
+    LinkedList.remove 方法，会在循环中将 node 的每个属性都置为 null，再将 node 置为 null
+    ArrayList.remove 方法，会在循环中将数组的每个成员都置为 null
+

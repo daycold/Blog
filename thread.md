@@ -177,3 +177,13 @@ join: 一个 synchronized 方法，轮询存活状态并 wait
         yield 和 sleep 都是 Thread 的静态方法，锁是落在对象上的，因而这两个方法不存在操作锁的方式
         对于从wait中被notify的进程来说，它在被notify之后还需要重新检查是否符合执行条件，如果不符合，就必须再次被wait，如果符合才能往下执行。所以：wait方法应该使用循环模式来调用
         thread 在结束是会调用一次 notifyAll，唤醒持有该线程对象所有 wait 的线程
+
+## Condition
+AQS 的内部类 ConditionObject 实现了 Condition 接口
+
+### ConditionObject
+持有一个双端队列的头尾节点引用，当前线程调用 await 方法后构造成节点加入队尾。
+一个锁上可以有多个 Condition，持有多个队列
+AQS 自身也持有双端列队，所以 condition 相当于对等待队列作分组?
+AQS 本身仅实现了线程间的竞争和等待队列，condition 实现了占有锁后让出锁的实现
+
