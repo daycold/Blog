@@ -187,3 +187,31 @@ AQS 的内部类 ConditionObject 实现了 Condition 接口
 AQS 自身也持有双端列队，所以 condition 相当于对等待队列作分组?
 AQS 本身仅实现了线程间的竞争和等待队列，condition 实现了占有锁后让出锁的实现
 
+
+## Atomic 类
+通过 unsafe.compareAndSet 实现线程安全
+
+例：
+
+    多线程正数自增：
+    private final AtomicInteger ai = new AtomicInteger(0);
+    
+    public void increase() {
+        int i = ai.get();
+        while(!ai.compareAndSet(i, i + 1)) {
+            i ++;
+        }
+    }
+    
+    一段代码在多线程下只运行一次
+    private final AtomicBoolean ab = new AtomicInteger(true);
+    
+    public void done() {
+        if (ab.compareAndSet(true, false)) {
+            // doSth
+            ab.compareAndSet(false, true);
+        }
+    }
+    
+
+
