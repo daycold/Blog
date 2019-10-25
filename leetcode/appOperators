@@ -1,0 +1,393 @@
+在直接使用 list 保存时会有重复的值，需要优化。
+-----------------------
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
+
+public class Solution {
+    public List<String> addOperators(String num, int target){
+        // 创建一个根节点
+        Node head = new Node(0, Node.ROOT);
+        // 将 string 生成树
+        split(num, head);
+        // 将树撕裂成链
+        List<NumberLinkNode> list = head.travel();
+        Set<String> result = new HashSet<>();
+        // 每个链单独计算结果
+        list.forEach(it -> {
+            it.toFuncNode(target, result);
+            it.clearAll();
+        });
+        return new ArrayList<>(result);
+    }
+
+    // 将字符串撕裂成树
+    private void split(String numStr, Node root) {
+        int len = numStr.length();
+        if (len == 0) {
+            return;
+        }
+        if (numStr.charAt(0) == '0') {
+            len = 1;
+        }
+        for (int i = 1; i<= len; i++) {
+            Node node = createNode(numStr.substring(0, i), root);
+            split(numStr.substring(i), node);
+        }
+    }
+
+    // 根据大小判断使用 int 还是 long
+    public static Node createNode(String str, Node root) {
+        Long num = Long.parseLong(str);
+        if (num > Integer.MAX_VALUE || num < Integer.MIN_VALUE) {
+            return new Node(num, root);
+        } else {
+            return new Node(num.intValue(), root);
+        }
+    }
+}
+
+// 该 node 为链 node
+abstract class AbstractLinkNode {
+    abstract AbstractLinkNode getNext();
+
+    // 删除所有后置节点
+    abstract void clearAll();
+}
+
+// 该 node 为数字链 node
+class NumberLinkNode extends AbstractLinkNode {
+    private Number number;
+    private NumberLinkNode pre;
+    private NumberLinkNode next;
+
+    NumberLinkNode(Number number) {
+        this.number = number;
+    }
+
+    Number getNumber() {
+        return number;
+    }
+
+    void setNumber(Number number) {
+        this.number = number;
+    }
+
+    void setNext(NumberLinkNode next) {
+        this.next = next;
+    }
+
+    void setPre(NumberLinkNode pre) {
+        this.pre = pre;
+    }
+
+    @Override
+    NumberLinkNode getNext() {
+        return next;
+    }
+
+    NumberLinkNode getPre() {
+        return pre;
+    }
+
+    @Override
+    void clearAll() {
+        NumberLinkNode node = getNext();
+        while (node != null) {
+            node.pre.next = null;
+            node.pre = null;
+            node = node.next;
+        }
+    }
+
+    public String toString() {
+        return number.toString();
+    }
+
+    // 计算数字链的结果
+    void toFuncNode(long answer, Set<String> results) {
+        // 只有一个节点不需要计算
+        if (getNext() == null) {
+            if (number.longValue() == answer) {
+                results.add(number.toString());
+            } 
+            // else if (number.longValue() == -answer) {
+            //     results.add(String.valueOf(-number.longValue()));
+            // }
+            return;
+        }
+
+        long value = number.longValue();
+        FuncLinkNode head = new FuncLinkNode(value, FuncLinkNode.POSITIVE);
+
+        // 构造带运算符的链
+        NumberLinkNode node = getNext();
+        FuncLinkNode funcNode = head;
+        while (node != null) {
+            FuncLinkNode newFunc = new FuncLinkNode(node.number.longValue(), FuncLinkNode.PLUS);
+            funcNode.setNext(newFunc);
+            funcNode = newFunc;
+            node = node.getNext();
+        }
+
+        buildNodes(head, head.getNext(), answer, results);
+    }
+
+    private void buildNodes(FuncLinkNode head, FuncLinkNode func, long answer, Set<String> results) {
+        if (func == null) {
+            return;
+        }
+        // 此处会产生重复计算，所以使用的 set 去重（如果默认 function=1，每次 set 1 都是重复计算), 可以支持除法
+        for (int function : FuncLinkNode.FUNCS) {
+            func.setFunction(function);
+            checkResult(head, answer, results);
+            buildNodes(head, func.getNext(), answer, results);
+        }
+
+    }
+
+    private void checkResult(FuncLinkNode head, long answer, Set<String> results) {
+        // 可以支持负号
+        for (int function : FuncLinkNode.HEADS) {
+            head.setFunction(function);
+            if (head.cal() == answer) {
+                String result = head.buildString();
+                results.add(result);
+            }
+        }
+    }
+}
+
+// 算式链，function 标识算法，remains 为符号后面的数字（每个数字都在符号后面，第一个数字前有正负号）
+class FuncLinkNode extends AbstractLinkNode {
+    private int function;
+    private long remains;
+    private FuncLinkNode next;
+
+    FuncLinkNode(long remains, int function) {
+        this.remains = remains;
+        this.function = function;
+    }
+
+    int getFunction() {
+        return function;
+    }
+
+    void setFunction(int function) {
+        this.function = function;
+    }
+
+    long getRemains() {
+        return remains;
+    }
+
+    void setRemains(long remains) {
+        this.remains = remains;
+    }
+
+    FuncLinkNode getNext() {
+        return next;
+    }
+
+    void setNext(FuncLinkNode next) {
+        this.next = next;
+    }
+
+    // 判断是否是乘除法
+    boolean isEnhanced() {
+        return function == 3 || function == 4;
+    }
+
+    void clearAll() {
+        FuncLinkNode node = this;
+        while (node != null) {
+            FuncLinkNode current = node;
+            node = node.next;
+            current.next = null;
+        }
+    }
+
+    // 计算运算链的结果
+    long cal() {
+        // 使用一个 node 来存储中间的乘除结果
+        FuncLinkNode nextNode = new FuncLinkNode(0, 0);
+        // nextNode.remains 中间存储乘除的结果
+        nextNode.setRemains(remains);
+        nextNode.setNext(next);
+        nextNode.setFunction(function);
+        // result 存储前面计算的结果
+        long result = 0;
+        while (true) {
+            FuncLinkNode node = nextNode.getNext();
+            if (node == null) {
+                return nextNode.func(result);
+            }
+            if (node.isEnhanced()) {
+                // 当遇到乘除法时，存储临时结果，修改下一个运算符的指向
+                nextNode.setRemains(node.func(nextNode.getRemains()));
+                nextNode.setNext(node.getNext());
+            } else {
+                // 遇到加减法时，直接结算，修改当前运算符(nextNode)的指向
+                result = nextNode.func(result);
+                nextNode.setNext(node.getNext());
+                nextNode.setRemains(node.getRemains());
+                nextNode.setFunction(node.getFunction());
+            }
+        }
+    }
+
+    String buildString() {
+        StringBuilder builder = new StringBuilder();
+        FuncLinkNode node = this;
+        while (node != null) {
+            builder.append(node);
+            builder.append(node.getRemains());
+            node = node.getNext();
+        }
+        return builder.toString();
+    }
+
+    long func(long num) {
+        switch (function) {
+            case NEGATIVE:
+                return -remains;
+            case PLUS:
+                return num + remains;
+            case MINUS:
+                return num - remains;
+            case DIVIDE:
+                return num / remains;
+            case MUTIPLY:
+                return num * remains;
+            default:
+                return remains;
+        }
+    }
+
+    @Override
+    public String toString() {
+        switch (function) {
+            case PLUS:
+                return "+";
+            case MINUS:
+                return "-";
+            case DIVIDE:
+                return "/";
+            case MUTIPLY:
+                return "*";
+            case NEGATIVE:
+                return "-";
+            default:
+                return "";
+        }
+    }
+
+    static final int PLUS = 1;
+    static final int MINUS = 2;
+    static final int DIVIDE = 3;
+    static final int MUTIPLY = 4;
+    static final int NEGATIVE = 0;
+    static final int POSITIVE = -1;
+
+    static final int[] FUNCS = {PLUS, MINUS, MUTIPLY};
+    static final int[] HEADS = {POSITIVE};
+    // static final int[] HEADS = {POSITIVE, NEGATIVE};
+}
+
+// 树链
+class Node {
+    private final Number value;
+    private final List<Node> children = new LinkedList<>();
+    private Node root;
+
+    Node(Number number) {
+        this.value = number;
+    }
+
+    Node(Number number, Node root) {
+        this(number);
+        this.root = root;
+        root.addChild(this);
+    }
+
+    Node getRoot() {
+        return root;
+    }
+    
+    void setRoot(Node root) {
+        this.root = root;
+    }
+
+    List<Node> getChildren() {
+        return children;
+    }
+
+    void clearChildren() {
+        children.forEach(this::removeChild);
+        children.clear();
+    }
+
+    void addChild(Node child) {
+        children.add(child);
+    }
+
+    void removeChild(Node child) {
+        children.remove(child);
+        child.setRoot(ROOT);
+    }
+
+    Number getValue() {
+        return value;
+    }
+
+    List<NumberLinkNode> travel() {
+        List<NumberLinkNode> linkNodes = new LinkedList<>();
+        getChildren().forEach(node -> node.travels(this, linkNodes));
+        return linkNodes;
+    }
+
+    // 从叶子向根遍历, 将树拆成链
+    private void travels(Node ends, List<NumberLinkNode> container) {
+        if (getChildren().isEmpty()) {
+            NumberLinkNode node = new NumberLinkNode(getValue());
+            Node parent = getRoot();
+            while (parent != ends) {
+                NumberLinkNode pre = new NumberLinkNode(parent.getValue());
+                node.setPre(pre);
+                pre.setNext(node);
+                node = pre;
+                parent = parent.getRoot();
+            }
+            container.add(node);
+        } else {
+            getChildren().forEach(node -> node.travels(ends, container));
+        }
+    }
+
+    public static final Node ROOT = new Node(0) {
+        @Override
+        Node getRoot() {
+            return this;
+        }
+
+        @Override
+        List<Node> getChildren() {
+            return null;
+        }
+
+        @Override
+        void clearChildren() {
+        }
+
+        @Override
+        void addChild(Node child) {
+        }
+
+        @Override
+        void removeChild(Node child) {
+        }
+    };
+}
+
