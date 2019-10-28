@@ -1,10 +1,6 @@
-在直接使用 list 保存时会有重复的值，需要优化。
------------------------
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
 
 public class Solution {
     public List<String> addOperators(String num, int target){
@@ -14,7 +10,7 @@ public class Solution {
         split(num, head);
         // 将树撕裂成链
         List<NumberLinkNode> list = head.travel();
-        Set<String> result = new HashSet<>();
+        List<String> result = new LinkedList<>();
         // 每个链单独计算结果
         list.forEach(it -> {
             it.toFuncNode(target, result);
@@ -107,7 +103,7 @@ class NumberLinkNode extends AbstractLinkNode {
     }
 
     // 计算数字链的结果
-    void toFuncNode(long answer, Set<String> results) {
+    void toFuncNode(long answer, List<String> results) {
         // 只有一个节点不需要计算
         if (getNext() == null) {
             if (number.longValue() == answer) {
@@ -132,10 +128,11 @@ class NumberLinkNode extends AbstractLinkNode {
             node = node.getNext();
         }
 
+        checkResult(head, answer, results);
         buildNodes(head, head.getNext(), answer, results);
     }
 
-    private void buildNodes(FuncLinkNode head, FuncLinkNode func, long answer, Set<String> results) {
+    private void buildNodes(FuncLinkNode head, FuncLinkNode func, long answer, List<String> results) {
         if (func == null) {
             return;
         }
@@ -145,10 +142,10 @@ class NumberLinkNode extends AbstractLinkNode {
             checkResult(head, answer, results);
             buildNodes(head, func.getNext(), answer, results);
         }
-
+        func.setFunction(FuncLinkNode.PLUS);
     }
 
-    private void checkResult(FuncLinkNode head, long answer, Set<String> results) {
+    private void checkResult(FuncLinkNode head, long answer, List<String> results) {
         // 可以支持负号
         for (int function : FuncLinkNode.HEADS) {
             head.setFunction(function);
@@ -291,9 +288,10 @@ class FuncLinkNode extends AbstractLinkNode {
     static final int NEGATIVE = 0;
     static final int POSITIVE = -1;
 
-    static final int[] FUNCS = {PLUS, MINUS, MUTIPLY};
-    static final int[] HEADS = {POSITIVE};
+    // static final int[] FUNCS = {PLUS, MINUS, MUTIPLY}; // PLUS as default
+    static final int FUNCS = {MINUS, MUTIPLY};
     // static final int[] HEADS = {POSITIVE, NEGATIVE};
+    static final int[] HEADS = {POSITIVE};
 }
 
 // 树链
