@@ -1,0 +1,122 @@
+
+/**
+ * 实现一个基本的计算器来计算一个简单的字符串表达式的值。
+ * <p>
+ * 字符串表达式可以包含左括号 ( ，右括号 )，加号 + ，减号 -，非负整数和空格  。
+ *
+ * @author Stefan Liu
+ */
+public class Calculator {
+    public int calculate(String s) {
+        char[] chars = s.toCharArray();
+        int start = 0;
+        CharNode head = new CharNode(0);
+        CharNode current = head;
+        FuncNode headFunc = new FuncNode(0, true);
+        FuncNode funcNode = headFunc;
+        Stackk stack = new Stackk();
+        while (start < chars.length) {
+            char c = chars[start];
+            switch (c) {
+                case ' ':
+                    break;
+                case '+':
+                case '-':
+                    funcNode = new FuncNode(funcNode.doFunc(head.toInt()), c == '+');
+                    current = head;
+                    break;
+                case '(':
+                    stack.push(funcNode);
+                    funcNode = headFunc;
+                    current = head;
+                    break;
+                case ')':
+                    CharNode newNode = new CharNode(funcNode.doFunc(head.toInt()));
+                    head.next = newNode;
+                    current = newNode;
+                    funcNode = stack.pop();
+                    break;
+                case '0':
+                case '1':
+                case '2':
+                case '3':
+                case '4':
+                case '5':
+                case '6':
+                case '7':
+                case '8':
+                case '9':
+                    newNode = new CharNode(c - 48);
+                    current.next = newNode;
+                    current = newNode;
+                    break;
+            }
+            start++;
+        }
+        return funcNode.doFunc(head.toInt());
+    }
+}
+
+class CharNode {
+    int value;
+    CharNode next;
+
+    CharNode(int value) {
+        this.value = value;
+    }
+
+    int toInt() {
+        int result = value;
+        CharNode node = next;
+        while (node != null) {
+            result = node.value + result * 10;
+            node = node.next;
+        }
+        return result;
+    }
+}
+
+class FuncNode {
+    int value;
+    boolean isPlus;
+
+    FuncNode(int value, boolean isPlus) {
+        this.value = value;
+        this.isPlus = isPlus;
+    }
+
+    int doFunc(int num) {
+        if (isPlus) {
+            return value + num;
+        } else {
+            return value - num;
+        }
+    }
+}
+
+class Stackk {
+    Node head;
+
+    void push(FuncNode node) {
+        Node newHead = new Node();
+        newHead.next = head;
+        newHead.node = node;
+        head = newHead;
+    }
+
+    FuncNode pop() {
+        if (head == null) {
+            return null;
+        }
+        Node currentHead = head;
+        head = currentHead.next;
+        currentHead.next = null;
+        return currentHead.node;
+    }
+
+    private class Node {
+        FuncNode node;
+        Node next;
+    }
+}
+
