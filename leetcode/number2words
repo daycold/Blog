@@ -1,0 +1,89 @@
+
+/**
+ * 将非负整数转换为其对应的英文表示。可以保证给定输入小于 231 - 1 。
+ *
+ * @author Stefan Liu
+ */
+class Solution {
+    public String numberToWords(int num) {
+        if (num == 0) {
+            return ZERO;
+        }
+        int index = 0;
+        Node head = new Node(EMPTY);
+        while (num != 0) {
+            int value = num % 1000;
+            if (value != 0) {
+                Node amount = new Node(AMOUNT[index]);
+                amount.next = head;
+                head = amount;
+                head = buildHundred(value, head);
+            }
+            num = num / 1000;
+            index++;
+        }
+        return head.buildString();
+    }
+
+    // num < 1000
+    private Node buildHundred(int num, Node tail) {
+        Node current = tail;
+        int hundred = num / 100;
+        int tens = num % 100;
+        int ten = tens / 10;
+        int one = tens % 10;
+
+        if (ten == 1) {
+            Node newNode = new Node(TEEN[one]);
+            newNode.next = current;
+            current = newNode;
+        } else {
+            Node oneNode = new Node(SINGLE[one]);
+            oneNode.next = current;
+            current = new Node(TY[ten]);
+            current.next = oneNode;
+        }
+        if (hundred != 0) {
+            Node hundredNode = new Node(HUNDRED);
+            hundredNode.next = current;
+            current = new Node(SINGLE[hundred]);
+            current.next = hundredNode;
+        }
+        return current;
+    }
+
+    private class Node {
+        Node next;
+        String value;
+
+        Node(String value) {
+            this.value = value;
+        }
+
+        String buildString() {
+            Node node = next;
+            StringBuilder builder = new StringBuilder(value);
+            while (node != null) {
+                if (node.value != EMPTY) {
+                    builder.append(" ").append(node.value);
+                }
+                node = node.next;
+            }
+            if (builder.charAt(0) == ' ') {
+                return builder.substring(1);
+            }
+            return builder.toString();
+        }
+    }
+
+    private static final String EMPTY = "";
+    private static final String ZERO = "Zero";
+    private static final String HUNDRED = "Hundred";
+    private static final String[] AMOUNT = {EMPTY, "Thousand", "Million", "Billion", "Giga"};
+    private static final String[] SINGLE = {EMPTY, "One", "Two", "Three", "Four", "Five",
+            "Six", "Seven", "Eight", "Nine"};
+    private static final String[] TEEN = {"Ten", "Eleven", "Twelve", "Thirteen", "Fourteen",
+            "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"};
+    private static final String[] TY = {EMPTY, EMPTY, "Twenty", "Thirty", "Forty", "Fifty",
+            "Sixty", "Seventy", "Eighty", "Ninety"};
+}
