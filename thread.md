@@ -105,7 +105,7 @@ extends AbstractExecutorService
 持有一个 Worker 集合
 #### Worker 内部类
  extends AQS implementes Runnable
- 通过 AQS 实现锁的操作, worker 每次执行任务前加锁，防止被中断（中断需要该线程调用sleep，join，wait，yield 等方法，加锁后该线程不会在其他地方被调用）
+ 通过 AQS 实现锁的操作, worker 每次执行任务前加锁，防止任务被中断（各种原因引起的阻塞，如sleep，join，wait，yield 等方法，加锁后该线程不会在其他地方被调用）
  持有一个 final 的 Thread 和一个可变的 Runnable 引用（使用一个线程执行不同的任务）
  如果一个 worker，getTask() == null， 则会销毁
  对于 getTask（）方法，如果设置为允许核心线程过期，获取线程数大于核心线程数，则会调用阻塞列队的 poll 方法并设置超时时间。当前线程数小于核心线程数，则会调用不过期的 take 方法，保持 worker 不销毁
@@ -159,6 +159,9 @@ extends Future, Runnable
 持有一个当前线程的引用 thread 和一个 WaitNode 的引用 next
 
 ## object, thread
+竞争锁失败的线程依旧是活跃的线程，就绪状态。
+调用 wait 的线程被阻塞，需要 notify 才能进入就绪状态。
+
 wait: 让出 cpu 和锁（需要 notify 唤醒）
 sleep： 仅让出 cpu
 notify/notifyAll: 唤醒竞争该对象失败而进入 wait 状态的该对象所在的线程
@@ -217,4 +220,71 @@ AQS 本身仅实现了线程间的竞争和等待队列，condition 实现了占
 非阻塞型 IO，数据未准备好时，不进行等待，返回异常，此时可由用户控制继续访问或者先做别的事
 ### Selector
 使用独立线程轮询注册的信道，满足条件时通知工作线程
+
+## BlockingQueue
+
+基础方法
+
+method | detail
+--- |---
+add | 添加元素，列队满了抛出 IllegalStateException
+offer | 添加元素，列队满了（或等待一定时间后依旧满了）返回 false
+put | 添加元素，列队满了阻塞
+take| 获取元素，列队为空时阻塞
+poll | 获取元素，列队为空（或等待一定时间后仍然为空）返回 null
+
+### ArrayBlockingQueue
+持有一个 ReentrantLock 引用，
+两个 Condition 引用 notEmpty, notNull
+
+#### offer(E)
+简单的 lock
+
+        lock.lock();
+        try {
+            if (count == items.length)
+                return false;
+            else {
+                enqueue(e);
+                return true;
+            }
+        } finally {
+            lock.unlock();
+        }
+
+#### offer(E, long, TimeUnit)
+队列满时将线程加到 notFull 的队列下指定时间
+
+        long nanos = unit.toNanos(timeout);
+        final ReentrantLock lock = this.lock;
+        lock.lockInterruptibly();
+        try {
+            while (count == items.length) {
+                if (nanos <= 0)
+                    return false;
+                nanos = notFull.awaitNanos(nanos);
+            }
+            enqueue(e);
+            return true;
+        } finally {
+            lock.unlock();
+        }
+
+
+#### put(E)
+列队满是阻塞
+
+        lock.lockInterruptibly();
+        try {
+            while (count == items.length)
+                notFull.await();
+            enqueue(e);
+        } finally {
+            lock.unlock();
+        }
+
+
+## Phaser
+允许并发多阶段任务
+在每一步结束的位置对线程同步，所有线程多完成这一步才允许执行下一步
 

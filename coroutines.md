@@ -18,10 +18,36 @@ yield | 挂起协程，分发到 dispatcher 队列,相当于 Thread.yield
 
 function | details
 --- | ---
-select | 同时等待多个挂起函数，并选择第一个可用的
+select | 同时等待多个挂起函数，并选择第一个可用的(其余的会继续运行完成）
 
 有挂起操作或者被 suspend 标记的方法必须被 suspend 申明
 launch 等方法会在一开始给没有调度器的 CoroutineContext 分配默认调度器
+
+### select
+
+     val job = CoroutineScope(context).async {
+          select<String> {
+              async {
+                  val time = System.currentTimeMillis()
+                  delay(2000)
+                  println(System.currentTimeMillis() - time)
+              }.onAwait.invoke { "job 1" }
+              async {
+                  val time = System.currentTimeMillis()
+                  delay(1000)
+                  println(System.currentTimeMillis() - time)
+              }.onAwait.invoke { "job 2" }
+          }
+      }
+      println(job.await())
+      println(System.currentTimeMillis() - mills)
+    
+返回结果为：
+
+    1023
+    2006
+    job 2
+    2078
 
 ## Mutex
 互斥锁
