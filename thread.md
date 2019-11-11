@@ -65,8 +65,9 @@
 #### question
     怎么判断当前资源有无持有者？
     一个线程获取资源后怎么阻止其他线程对资源的获取？
+    -- 通过 CAS 进行同步操作
     当前持有者释放资源后怎么通知其他线程？
-    
+    -- 所有线程都不会休眠，进入一个等待队列。队列的头部会不停进行 CAS 操作，当成攻后就获得锁并出队列。根据状态判断获取锁失败的线程自旋还是休眠。
 ### field
 state: volatile int, 同步状态
 
@@ -81,6 +82,10 @@ wait queue node class
 CLH queue，kind of FIFO queue ?
 CLH 锁：通过比较前驱节点的状态来自旋的锁
 
+#### doAcquireShard
+创建一个 Node,添加到等待队列中
+当前驱节点为头节点（头结点拥有锁）时，尝试获取锁（如果头结点释放了锁则可用获取到锁，并且将自身置为头结点）
+判断获取失败是否阻塞线程，如果需要阻塞则调用 LockSupport.park 阻塞线程（在 release 锁的时候会调用 LockSupport.unpark 释放队列的第一个阻塞线程）。
 #### question
 
 1. But being first does not guarantee success; 描述中有句这个， ?
@@ -287,4 +292,44 @@ poll | 获取元素，列队为空（或等待一定时间后仍然为空）返�
 ## Phaser
 允许并发多阶段任务
 在每一步结束的位置对线程同步，所有线程多完成这一步才允许执行下一步
+与 CountDownLatch，CyclicBarrier 相似的功能，更为动态？
+
+### register
+新注册一个 party
+### arrive
+抵达 Phaser，到达线程计数器加一，并不等待其他未完成线程
+### arriveAndDeregister
+抵达 Phaser，到达线程计数器加一，并不等待其他未完成线程，注销此线程注册的 party
+### arriveAndAwaitAdvance 
+抵达 Phaser，到达线程计数器加一，等待其他未完成线程
+### awaitAdvance
+在指定阶段 phase 等待其他线程到达屏障点
+
+
+## CountDownLatch
+使用 AQS 共享锁实现同步并发任务。
+state 无法重置（只能使用一次）。
+重写的 tryAcquireShared，返回结果与参数无关
+
+### await
+休眠线程
+aqs.acquireSharedInterruptibly(1)，当当前状态不为 0，则会阻塞线程（与参数 1 无关）
+
+### countDown
+释放共享锁，计数器-1，计数器变为 0 时唤醒所有休眠线程
+
+### getCount
+未释放的锁的数量（当前计数器的值）
+aqs.releaseShared(1)
+
+## CyclicBarrier
+持有一个 ReentrantLock, 一个 Condition，持有一个 barrierCommand(Runnable),所有线程完成任务后触发。
+
+### reset
+唤醒所有休眠线程，重置计数器
+### await
+未完成线程计数器减一。
+如果计数器为 0，调用 barrierCommand，并唤醒所有线程，重置计数器，直接返回。
+否则，调用 Condition.await 休眠线程
+
 
