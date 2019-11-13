@@ -290,9 +290,10 @@ poll | 获取元素，列队为空（或等待一定时间后仍然为空）返�
 
 
 ## Phaser
-允许并发多阶段任务
+允许并发多阶段任务 [文档](https://segmentfault.com/a/1190000015979879)
 在每一步结束的位置对线程同步，所有线程多完成这一步才允许执行下一步
 与 CountDownLatch，CyclicBarrier 相似的功能，更为动态？
+多阶段栅栏，可以在初始时设定参与线程数，也可以中途注册/注销参与者，当到达的参与者数量满足栅栏设定的数量后，会进行阶段升级（advance）
 
 ### register
 新注册一个 party
@@ -310,6 +311,7 @@ poll | 获取元素，列队为空（或等待一定时间后仍然为空）返�
 使用 AQS 共享锁实现同步并发任务。
 state 无法重置（只能使用一次）。
 重写的 tryAcquireShared，返回结果与参数无关
+倒数计数器，初始时设定计数器值，线程可以在计数器上等待，当计数器值归0后，所有等待的线程继续执行
 
 ### await
 休眠线程
@@ -324,6 +326,7 @@ aqs.releaseShared(1)
 
 ## CyclicBarrier
 持有一个 ReentrantLock, 一个 Condition，持有一个 barrierCommand(Runnable),所有线程完成任务后触发。
+循环栅栏，初始时设定参与线程数，当线程到达栅栏后，会等待其它线程的到达，当到达栅栏的总数满足指定数后，所有等待的线程继续执行
 
 ### reset
 唤醒所有休眠线程，重置计数器
@@ -331,5 +334,46 @@ aqs.releaseShared(1)
 未完成线程计数器减一。
 如果计数器为 0，调用 barrierCommand，并唤醒所有线程，重置计数器，直接返回。
 否则，调用 Condition.await 休眠线程
+
+
+## Exchanger
+类似于 CyclicBarrier
+Thread1线程到达栅栏后，会首先观察有没其它线程已经到达栅栏，如果没有就会等待，如果已经有其它线程（Thread2）已经到达了，就会以成对的方式交换各自携带的信息
+[参考](https://segmentfault.com/a/1190000015963932)
+
+持有一个 participant，继承 ThreadLocal<Node>,持有一个 Node 数组 arena 和 Node slot, int bound
+### exchange
+
+#### 实践
+
+    val exchanger: Exchanger<Message> = Exchanger()
+    val thread1 = thread {
+        sleep(200)
+        val message = Message()
+        message.message = "success"
+        println("thread1: ${exchanger.exchange(message).message}")
+    }
+    val thread2 = thread {
+        val message = Message()
+        val newMessage = exchanger.exchange(message)            // -----------1
+        message.message = "failure"                             // -----------2
+        println("thread2: ${newMessage.message}") 
+    }
+     输出 thread1: ; thread2: success
+     将 1，2 两行互换后，输出 thread1: failure ; thread2: success
+     当添加第三个 thread 时，第三个 thread 将一直处于阻塞情况。
+     
+调用 exchange 方法后不能再在本线程修改对象来改变其他线程的获取到的结果
+     
+## 伪缓存
+
+缓存系统（如 cpu 缓存）中以缓存行的形式进行存储。cpu 与主内存之间有几层缓存。越靠近 cpu 访问速度越快。
+缓存行 64 字节。
+两个数据存储在同一个缓存行，被两个线程修改时，处理器之间会发起通信，使该缓存行只被一个处理器操作。完成后发起通信以通知其他处理器。该过程会浪费资源。
+
+### 缓存行填充
+Java 程序的对象头固定占 8 字节(32位系统)或 12 字节( 64 位系统默认开启压缩, 不开压缩为 16 字节)，所以我们只需要填 6 个无用的长整型补上6*8=48字节，让不同的 VolatileLong 对象处于不同的缓存行，就避免了伪共享
+
+@sun.misc.Contended 注解会实现该操作
 
 
