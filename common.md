@@ -241,6 +241,7 @@ JPA | Java Persistence API
 CRUD | create retrieve update delete
 FP | Functional Programming
 RP | Reactive Programming
+DDoS | Distributed Denial of Service 分布式拒绝服务，短时间大量请求消耗主机资源
 
 --
 

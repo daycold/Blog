@@ -68,3 +68,46 @@
 中间商和发布者可以通过消息队列进行通信
 中间商和发布者可以使用观察者模式，也可使用消息队列进行通信
 
+## 监听者模式
+类似于观察者模式，将主题拆分为事件源和事件。事件源会把事件传递给接收者。
+java基础包提供了一个标记性的接口 EventListener, 提供了遗失基础的事件类 EventObject
+
+### EventListener
+空接口，标注为监听者
+### EventObject
+事件
+持有一个数据源的引用
+
+### spring 提供的监听者
+#### ApplicationListener
+继承自 EventListener
+标记为函数式接口
+提供响应事件的方法 onApplicationEvent
+#### ApplicationEventPublisher
+标记为函数型接口
+提供发布事件的方法 publishEvent
+被 ApplicationContext 继承
+
+#### ApplicationEvent
+抽象类
+继承自 EventObject
+申明一个 final 方法获取构造函数初始化时的系统时间
+
+#### AbstractApplicationContext
+持有一个 ApplicationEvent 的 set，持有一个 ApplicationEventMulticaster（事件的辅助接口）
+set 不为 null 时直接添加，为空时交给 ApplicationEventMulticaster 处理
+如果该 context 存在 parent，则最后调 parent 的 publishEvent
+
+容器会在启动的时候将 set 赋值并置空，完成对启动事件的监听。后续业务事件交给辅助接口。
+
+拥有一个 applicationListener 的 set
+
+#### SimpleApplicationEventMulticaster
+持有一个内部类 ListenerRetriever 的实例，存有一个 ApplicationListener 的 set
+获取 application 的所有listener，并调用他们的 onApplication 方法
+
+### SealedClass
+继承受限的类。
+枚举如果有 value，必须是 final 的，不然在多线程下会出现问题。
+SealedClass 可以解决上述问题，不同的实例拥有不同的 value，但是实际上似乎没有合适的应用场景。
+
