@@ -61,6 +61,35 @@ Mutex().withLock {...} 等价于 val mutex = Mutex();try {mutex.lock;...}finally
 抽象类，继承自 AbstractCoroutineContextElement，ContinuationInterceptor
 在调用 CoroutineScope.newCoroutineContext 方法时会给 CoroutineContext 分配调度器(CoroutineContext 没有 ContinuationInterceptor 的 key 时)
 
+     class TestCoroutineDispatcher(override val executor: ThreadPoolExecutor) 
+     : ExecutorCoroutineDispatcher() {
+        override fun close() {
+            executor.shutdown()
+        }
+
+        override fun dispatch(context: CoroutineContext, block: Runnable) {
+            executor.submit {
+                block.run()
+            }
+        }
+    }
+    
+    fun main()  {
+        val threadPool = Executors.newFixedThreadPool(5)
+        val scope = CoroutineScope(TestCoroutineDispatcher(threadPool))
+        scope.async {
+            println(Thread.currentThread().name)
+        }
+        println(Thread.currentThread().name)
+        Thread.sleep(200)
+    }
+    
+    输出：
+        main
+        pool-1-thread-1
+    这样携程完全交给线程池调度，相当于一个线程池
+
+
 ### isDispatchNeeded
 实验性功能
 如果会调度到别的线程上，则返回 true
@@ -92,6 +121,7 @@ suspendCoroutine，createCoroutine, startCoroutine，扩展 suspend 修饰对象
 持有 isSuccess 和 isFailure 两个引用
 ## CoroutineContext
 协程上下文
+一个类似 map 的数据结构，类似 Map<Key<T>, T>, key中会指定value的类型
 
 接口仅申明如下方法
 fold, get, minusKey，plus
@@ -114,9 +144,13 @@ fold, get, minusKey，plus
 
 ## CoroutineScope
 持有一个抽象的 CoroutineContext 引用
+携程作用域
 
 当协程在 CoroutineScope 中启动时，将继承父协程的上下文，它的 job 将成为父协程的子 job。父协程取消时随之取消
 父协程会等待所有子协程执行完再结束，不需要显式 join
+
+使用 runBlocking 创建协程时，如果不指定 coroutineContext，则会创建一个 EventLoop（继承调度器）
+createEventLoop() 被 expect 关键字标记，没找到 dispatch 的方法实现
 
 ## Job
 继承自 Element
@@ -146,4 +180,9 @@ fold, get, minusKey，plus
 ### initParentJob
 使用父 job 的上下文初始化父 job
 
+
+## 总结
+协程作用域中申明创建调用协程。
+协程作用域持有协程上下文的信息。
+协程作用域相当于一个 dsl 作用域，通过 dsl 来创建协程，通过协程上下文来传递信息。
 

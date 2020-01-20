@@ -42,4 +42,25 @@ list 的 filter 实际调用的是 Iterable.filterTo(ArrayList(), perdicate: (T)
 ## SkipList 跳表
 对标的是平衡树，insert/delete/search 都是 O(log n)
 
+## List
+
+contains, remove之类调用的比较都是equals。
+在使用lambok的@Data时，由于会重写equals方法，在下面case下会有异常
+
+    class A {
+        private String name;
+    }
+    @Data
+    class B extends A {
+        private String value;
+    }
+    public static void main(String...args) {
+        A a = new B();
+        A b = new B();
+        a.setName("name");
+        a.equals(b);    // true
+    }
+    lombok的@Data生成equals方法时，默认只比较该类自身定义的各个属性值是否一致。在上例中，value都是null，因而判断为true。添加 @EqualsAndHashCode(callSuper=true)或者不适用@Data则可以解决
+    
+clone方法在object类中native实现
 
