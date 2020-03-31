@@ -115,6 +115,7 @@ Mutex().withLock {...} 等价于 val mutex = Mutex();try {mutex.lock;...}finally
 每次挂起时做参数（隐式）传入，封装协程恢复后的执行逻辑
 
 suspendCoroutine，createCoroutine, startCoroutine，扩展 suspend 修饰对象（方法）的三个方法，传入 Continuation 做参数
+挂起时会使用expect标记的方法创建一个新的Continuation，将执行过程分为多个Continuation片段，由状态机(可能是SequenceBuilderIterator?)保证各个状态的执行顺序
 ### resumeWith
 接受 Result 参数，处理结果
 ## Result
@@ -179,10 +180,54 @@ createEventLoop() 被 expect 关键字标记，没找到 dispatch 的方法实�
 
 ### initParentJob
 使用父 job 的上下文初始化父 job
+### delay
+将job生成task放入延迟队列中,让出cpu。
+    val coroutineDispather = newFixedThreadPoolContext(2, "threadPoolContext")
+    CoroutineScope(coroutineDispather).launch {
+        repeat(5) {
+            println(Thread.currentThread().name)
+            delay(200)
+        }
+    }
+    println(Thread.currentThread().name)
+    Thread.sleep(1500)
+    结果:
+    main
+    threadPoolContext-1
+    threadPoolContext-2
+    threadPoolContext-2
+    threadPoolContext-1
+    threadPoolContext-1
 
+    runBlocking {
+        launch {
+            repeat(5) {
+                println(Thread.currentThread().name)
+                delay(200)
+            }
+        }
+        println(Thread.currentThread().name)
+        Thread.sleep(1000)
+    }
+    结果:
+    main @coroutine#1
+    main @coroutine#2
+    main @coroutine#2
+    main @coroutine#2
+    main @coroutine#2
+    main @coroutine#2
+
+开启默认调度器的协程默认会新建BlockingEventLoop对象调度，该调度器只有一个线程。
+因而，runBlocking里面是一个线程，lauch里面是一个新的线程。
 
 ## 总结
 协程作用域中申明创建调用协程。
-协程作用域持有协程上下文的信息。
+协程作用域持有协程上下文的信息,用以在挂起时保存协程的状态。
 协程作用域相当于一个 dsl 作用域，通过 dsl 来创建协程，通过协程上下文来传递信息。
+协程可以配合nio进行调度,资源未准备好时挂起，而不阻塞线程进行其他操作。
+将竞争公共资源的部分放在协程中时，协程可以在竞争失败时挂起，而不阻塞线程进行其他操作。
+所以协程的优点是可以调度线程内代码的执行顺序，减少线程阻塞产生的资源浪费。
+修改dispatcher的调度方式（如使用线程池调度），等同于多线程
+协程的本质是使用一个线程（线程池）和任务队列调度任务
+
 

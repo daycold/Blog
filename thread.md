@@ -1,5 +1,5 @@
 # Thread
-
+cpu每次只运行线程的一个时间片。在存在竞争的过程中，多个线程的时间片可能交替执行。加锁后，没获得锁的线程不会参与竞争。
 
 
 ## AQS (AbstractQueuedSynchronizer)
@@ -29,7 +29,7 @@ CLH 锁：通过比较前驱节点的状态来自旋的锁
 判断获取失败是否阻塞线程，如果需要阻塞则调用 LockSupport.park 阻塞线程（在 release 锁的时候会调用 LockSupport.unpark 释放队列的第一个阻塞线程）。
 #### question
 
-1. But being first does not guarantee success; 描述中有句这个， ?
+1. But being first does not guarantee success; 描述中有句这个， ?可能因为跟其他线程一起竞争cpu导致失败
 2. 双向列队怎么非公平竞争？
 
 只是在内部类中定义了几个 field。

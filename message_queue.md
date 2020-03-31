@@ -1,4 +1,5 @@
 # MESSAGE_QUEUE
+Q: 过期策略，如何防丢失，并发量，速度
 ## JMS规范
 ### Connection
 开启会话
@@ -35,5 +36,13 @@ listeners broker 创建启动 socket 的配置
 推送ProducerRecord，在ProducerRecord中申明topic
 #### KafkaConsumer
 接收ConsumerRecord，需预先预定主题（调用 subscribe(topics) 方法)
+#### Broker
+Kafka的服务实例
+#### topic
+本事是一个目录，由分区日志组成，消息有序，且有唯一一个offset值。Customer根据offset读取消息
 
+### 流程
+
+### A
+kafka支持将消息持久化到本地文件系统中。
 

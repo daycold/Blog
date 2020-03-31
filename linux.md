@@ -38,6 +38,8 @@ chown [-R(递归)] {user}:{group} {file/dir} 修改文件所有者
 jps java process status? 查看java程序状态？
 
 ## shell
+chsh 切换shell(zsh, bash)等
+
 ~/.bashrc 中添加别名
 
     如：
@@ -51,3 +53,6 @@ jps java process status? 查看java程序状态？
       export KAFKA_HOME='/usr/local/services/kafka'
       export PATH=$PATH:$KAFKA_HOME/bin:$KAFKA_HOME/conf
       就可以 zkServer.sh start zoo.cfg #zkServer.sh 在/usr/local/services/kafka/bin 目录下，zoo.cfg在其conf目录下
+### plugin
+#### autojump
+j + 关键字 自动跳转目录

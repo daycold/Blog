@@ -58,11 +58,11 @@
 #### ChannelFuture
 所有IO操作都是异步
 #### Channel
-网络通信组件，能够用于执行IO操作
+网络通信组件，能够用于执行IO操作（a channel represents an open connection to an entity)
 #### Selector
 实现IO多路复用，通过Selector一个线程监听多个连接的Channel事件
 #### NioEventLoop
-维护一个线程和任务队列
+维护一个线程和任务队列（实现了ExecutorService接口），聚合一个Selector实现处理多个客户端连接
 #### NioEventLoopGroup
 管理eventLoop的生命周期，类似线程池的概念
 #### ChannelHandler
@@ -71,6 +71,8 @@
 保存Channel的上下分
 #### ChannelPipeline
 持有ChannelHandler的list，控制ChannelHandler处理的出入栈操作
+###流程
+NioEventLoop (里面的Selector)监听到注册的端口(channel)有输入进来，进行io操作，把输入放入任务列队，然后被线程池中的线程处理
 ## TOMCAT
 ### 启动
     
@@ -179,6 +181,12 @@ context可以添加多个servlet来处理分配给它的更详细路径的请求
 ### 结构
 #### HttpHandler
 处理HttpServerExchange
+##### PathHandler
+处理路由
+##### BlockingHandler
+调用了exchange.startBlocking()方法，能够获取到连接中的inputStream
+
+exchange中的io流通过blockingHttpExchange对象获得。调用该方法会生成一个新的blockingHttpExchange对象，可以得到io流
 #### HttpServerExchange
 持有请求和响应的上下文信息
 #### ListenerConfig
@@ -221,4 +229,23 @@ Handler继承LifeCycle接口实现生命周期管理
 如调用Server(8080)时，创建了 Connector(8080)并添加到Server持有的连接队列中
 继承LifeCycle实现生命周期管理
 继承Container实现容器功能
+
+## Http
+请求协议示例
+
+GET /api/v2/infos HTTP/1.1
+Content-Type: application/json
+User-Agent: PostmanRuntime/7.22.0
+Accept: */*
+Cache-Control: no-cache
+Postman-Token: d04ae105-918c-4776-bd24-d8c2f3204e72
+Host: student-api.beta.saybot.net:80
+Accept-Encoding: gzip, deflate, br
+Cookie: JSESSIONID=j5CU4JGHJ622Kd-oCifgGHasbnQ2gxLPUgedbvH6
+Connection: keep-alive
+
+
+(后面需一行空行。空行后再放body（如果有的话，没有就再空一行），有body需要加content-length的请求头）
+
+实质只是socket发送一段固定格式的文本
 
