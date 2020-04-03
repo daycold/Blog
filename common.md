@@ -16,6 +16,8 @@ BeanPostProcessor | bean 后置处理器，在 bean 实例化前后使用, BeanD
 ClassPathBeanDefinitionScanner | 路径下扫描 bean 定义信息
 FactoryBean | 注入工厂类，可以生产 bean
 ImportBeanDefinitionRegistrar | 动态注册 bean 接口
+ImportSelector | 导入外部配置的接口,收集需要导入的配置类,动态判断需要导入的类
+ConditionOnClass | 判断类是否存在，主要判断是否引用某个包
 
 
 --------------
