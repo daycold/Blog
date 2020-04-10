@@ -28,14 +28,14 @@ name | description
 ## 技术框架
 name |description 
 --- | ---
-eureka | 服务发现组件，注册管理各个服务
-ribbon | 使用restTemplate做负载均衡
-hystrix | 断路器
-feign | 使用注解rpc做负载均衡，自带断路器
+eureka / ˌjʊ(ə)ˈriːkə/| 服务发现组件，注册管理各个服务
+ribbon /ˈrɪb(ə)n/| 使用restTemplate做负载均衡
+hystrix /hɪst'rɪks/| 断路器
+feign /fein/| 使用注解rpc做负载均衡，自带断路器
 zuul | 网管配置
 springCloudConfig | 分布式配置中心(指定远程配置文件地址，文件名为{服务名}-{env}.properties)
 bus-amqp | 使用消息队列来广播配置文件更改或者服务之间通讯
-sleuth | 服务链路追踪
+sleuth /sluːθ/(zipkin) | 服务链路追踪
 
 ## 负载均衡
 配置方式

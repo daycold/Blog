@@ -249,3 +249,48 @@ Connection: keep-alive
 
 实质只是socket发送一段固定格式的文本
 
+## Springboot-web-mvc
+Q:
+spring做了什么
+A:
+spring申明了WebServer的模型，申明了webServerFactory 来创建 WebServer， 并在 springContext 的特定生命周期中启动 WebServer
+Q:
+web容器怎么将请求交给spring处理
+A:
+创建 webServer 的时候会将 servlet 容器传入 webServerFactory，在这个过程中实现了 servlet 与 web 容器的关联。
+
+### springweb 申明的结构
+#### WebServer 接口
+springWeb中申明WebServer接口，申明 start, stop, getPort方法
+在 springContext 的 onRefresh 的时候创建，finishRefresh 阶段会调用start方法
+
+#### AbstractServletWebServerFactory 抽象类
+提供一些对session，ssl等的支持
+实现了 WebServerFactory 接口
+#### ServletWebServerFactory 接口
+申明 getWebServer 方法，支持传入过多ServletContext 对象，ServletContext 对象为 Servlet 容器
+
+#### AbstractReactiveWebServerFactory 抽象类
+响应式的web容器工厂
+
+#### WebServerFactory 接口
+空接口，标记为webServerFactory
+
+#### WebServerFactoryCustomizer 接口
+对 webServerFactory 添加定制信息，在ServletWebFactoryAutoConfiguration注入的时候注入
+
+#### DispatcherServlet 类
+支持路径分发功能，在webServerFactoryCustomizer 注入后注入，springweb 默认生成的servlet类。undertow，tomcat接入spring都是对其的包装或直接使用。
+
+### coroutine来当web容器的调度器
+#### Undertow
+DeploymentInfo 中添加 initialHandlerChainWrapper，使用协程对 Handler 进行包装
+
+#### Tomcat
+在 TomcatServletWebServerFactory 中添加 TomcatContextCustomizer，指定支持协程的 wrapper。wrapper中包装 servlet，开启异步，使用协程。
+
+#### 问题
+controller怎么织入协程。
+suspend 方法应该要直接放在协程作用域中。因此，需要在调用 controller 方法的地方织入
+
+
