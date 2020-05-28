@@ -85,7 +85,7 @@ Q: 在多线程的情况下，在链表上（或红黑树）查询时，线程A�
 
 ### ConcurrentHashMap
 1.7使用分段锁
-1.8使用synchronized加CAS
+1.8使用synchronized加CAS,只锁数组上的node，如果不发生hash碰撞就全是无竞争并发
 
 ### TreeMap
 

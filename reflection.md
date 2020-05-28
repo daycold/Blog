@@ -8,6 +8,10 @@
       method.returnType.simpleName: "Func"
 
 ## Method
+suspend方法在使用java反射时会多一个协程的参数。使用kotlin反射的function时不会有。
+### genericParameterTypes
+返回的参数Type数组保留了泛型信息
+（is AnnotatedType）
 ### declaringClass
 获取的方法申明的位置。从所在类开始沿继承链向上查找，找到第一个（可以是重写的方法）
 动态代理会返回代理的名称
@@ -25,4 +29,6 @@
 在实现接口方法的时候回申明方法，所以 b 和 c 两个对象打印出自己的类名
 B 在重复申明 doA 方法后打印的 B，不重复申明打印的 A
 
+## Annotation
+使用 AnnotatedElementUtils等spring的工具类才能拿到@AliasFor的数据
 

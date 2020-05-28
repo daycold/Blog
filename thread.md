@@ -276,6 +276,7 @@ Thread1线程到达栅栏后，会首先观察有没其它线程已经到达栅�
     
 
 ## Future
+将回调放在task完成后设置result的方法中，可以实现链式回调,触发完成时的任务。
 ### RunnableFuture
 extends Future, Runnable
 
@@ -323,7 +324,7 @@ extends AbstractQueue implements BlockingQueue
 指定 ThreadPoolExecutor 的任务列队的实现
 放入 ScheduledFutureTask，通过下次执行时间进行排序，将最近执行的放在最前面。
 
-## FolkJoinPool
+## ForkJoinPool
 extends AbstractExecutorService
 
 将一个 task 拆分成多个 task,产出结果是多个 runnable 或者 callable，然后交给线程池执行
@@ -338,6 +339,8 @@ ForkJoinWorkerThread 持有一个 ForkJoinPool 的引用，每次 fork 都会将
     question：
             ForkJoinWorkerThread 的 run 方法进行了啥操作？(似乎没有操作？）
             工作窃取算法怎么执行的？
+
+
         
 ## object, thread
 竞争锁失败的线程依旧是活跃的线程，就绪状态。
