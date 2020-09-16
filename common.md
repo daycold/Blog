@@ -33,11 +33,13 @@ ConditionOnClass | 判断类是否存在，主要判断是否引用某个包
 11. initMessageSource (MessageSource)
 12. registerListeners (ApplicationListener)
 
-    Aware 接口在 BeanPostProcessor 的 postProcessBeforeInitialization 中调用
-    ImportBeanDefinitionRegistrar 接口在 BeanDefinitionRegistryProcess 的 postProcessBeanDefinitionRegistry 调用
+      Aware 接口在 BeanPostProcessor 的 postProcessBeforeInitialization 中调用
+      
+      ImportBeanDefinitionRegistrar 接口在 BeanDefinitionRegistryProcess 的 postProcessBeanDefinitionRegistry 调用
 
-    ImportSelector 接口返回 ImportBeanDefinitionRegistrar 的类名
-    @Import 放 ImportSelector （实际也是ImportBeanDefinitionRegistrar）或者 ImportBeanDefinitionRegistrar
+      ImportSelector 接口返回 ImportBeanDefinitionRegistrar 的类名
+      
+      @Import 放 ImportSelector （实际也是ImportBeanDefinitionRegistrar）或者 ImportBeanDefinitionRegistrar
     
 --------------
 
