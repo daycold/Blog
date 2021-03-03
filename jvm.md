@@ -30,6 +30,8 @@ threadLocalMap（没有实现 map 接口） 的 entry 继承自 weakReference
         
 gc 时，key 会回收，而 value 不会。回收后在调用 threadLocal.get 时会触发清除（threadLocalMap.expungeStaleEntry)。
 
+Thread持有一个threadLocalMap属性
+
 #### Cleaner
 DirectByteBuffer(能够申请堆外内存）持有一个Cleaner，在对象回收后释放堆内存。
 Cleaner为一个虚引用，继承 PhantomReference

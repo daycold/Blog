@@ -46,3 +46,10 @@ Kafka的服务实例
 ### A
 kafka支持将消息持久化到本地文件系统中。
 
+## RabbitMq
+长度限制策略：限制消息数（max-length）；限制字节数（max-length-bytes)；兼而有之
+
+限制行为（overflow）：
+
+1. 默认：drop-head: 丢弃dead-letter（最早的消息）
+2. rejection-publish: 抛弃最近发布的消息
