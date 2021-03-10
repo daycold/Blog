@@ -97,3 +97,11 @@ Loading -> Verification -> Preparation -> Resolution -> Initialization -> Using 
 3.通过ClassLoader.loadClass()方法动态加载
 
 
+## gc
+1. minor gc 回收年轻代
+2. major gc 回收老年代
+3. full gc 全部回收
+
+命令行工具 jconsole jvirtualVm。在jdk的bin包下。
+
+dump文件：可以使用jvirtualVm装载。添加jvm参数-XX:+HeapDumpOnOutOfMemoryError时可在发生oom时生成dump文件。-XX:HeapDumpPath= 指定dump文件路径

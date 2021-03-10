@@ -42,7 +42,16 @@ list 的 filter 实际调用的是 Iterable.filterTo(ArrayList(), perdicate: (T)
 ## SkipList 跳表
 对标的是平衡树，insert/delete/search 都是 O(log n)
 
+底层是链表，链表无法像arraylist一样做到快速查询，便使用类似二分法的方式做索引。
+    
+    比如说，9个元素，第一层的索引是0 -> 4 -> 8，锁定两个区间
+    第二层索引是 0 -> 2 -> 4 再锁定两个区间
+    从而在链表上实现二分查找的效果
+
 ## List
+
+List.stream().foreach 与 List.foreach 的区别，前者无序后者有序。前者使用的Spliterators，后者使用的Iterators。
+
 
 contains, remove之类调用的比较都是equals。
 在使用lambok的@Data时，由于会重写equals方法，在下面case下会有异常
@@ -63,6 +72,9 @@ contains, remove之类调用的比较都是equals。
     lombok的@Data生成equals方法时，默认只比较该类自身定义的各个属性值是否一致。在上例中，value都是null，因而判断为true。添加 @EqualsAndHashCode(callSuper=true)或者不适用@Data则可以解决
     
 clone方法在object类中native实现
+
+### Spliterators
+方法主要有 tryAdvance trySplit forEachRemaining
 
 ## Map
 ### HashMap

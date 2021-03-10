@@ -56,3 +56,24 @@ chsh 切换shell(zsh, bash)等
 ### plugin
 #### autojump
 j + 关键字 自动跳转目录
+
+## bash
+
+## ssh
+    useradd {username} # 创建用户 -g 参数指定组，否则会新建用户名相同的组
+	passwd {username} # 设置密码
+	usermod -g {group} {username} # 变更用户主要组，加-a参数则只添加组
+	groupadd {group}
+	groupdel {group}
+	groupmod {group}
+	gpasswd -d {username} {group} # 组中移除用户
+    ssh-keygen -t rsa -C "email" # 生成ssh
+	
+配置文件在 /etc/ssh/sshd_config, service sshd restart 重启生效配置
+
+1. 添加 AuthorizedKeysFile      .ssh/authorized_keys 和 PubkeyAuthentication yes 允许ssh免密登陆
+2. AllowUsers 和 DenyUsers 配置黑白名单
+
+## POSTGRESQL
+第一次登陆的时候一定要切换到 postgres 用户，并且添加sudo权限启动项目。然后可以去添加自己的role。
+
