@@ -48,3 +48,5 @@ sleuth /sluːθ/(zipkin) | 服务链路追踪
 4. com.netflix.loadbalancer.WeightedResponseTimeRule #配置规则 响应时间权重
 5. com.netflix.loadbalancer.BestAvailableRule #配置规则 最空闲连接策略
 
+## feign
+可以通过覆盖Feign.Builder的InvocationHandlerFactory可以实现日志插入

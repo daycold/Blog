@@ -1,0 +1,8 @@
+#mybatis
+## mapper时长
+如果有使用mapperScan 注解，则会使用 MapperScannerRegisterar
+注册MapperScannerConfigurer,否则会在mybatisAutoConfiguration 或
+mybatisPlusAutoConfiguration 中注册;亦可手动注册
+
+可以使用BeanDifinitionRegistryPostProcessor
+的beanDifinition后置处理方法，修改MapperScannerConfigurer 的bean（而非beanDifinition，因为此刻已实例化）, 替换 MapperFactoryBeanClass

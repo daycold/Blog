@@ -104,4 +104,4 @@ Loading -> Verification -> Preparation -> Resolution -> Initialization -> Using 
 
 命令行工具 jconsole jvirtualVm。在jdk的bin包下。
 
-dump文件：可以使用jvirtualVm装载。添加jvm参数-XX:+HeapDumpOnOutOfMemoryError时可在发生oom时生成dump文件。-XX:HeapDumpPath= 指定dump文件路径
+dump文件：可以使用jvisualVm装载。添加jvm参数-XX:+HeapDumpOnOutOfMemoryError时可在发生oom时生成dump文件。-XX:HeapDumpPath= 指定dump文件路径

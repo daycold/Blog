@@ -68,6 +68,8 @@ j + 关键字 自动跳转目录
 	groupmod {group}
 	gpasswd -d {username} {group} # 组中移除用户
     ssh-keygen -t rsa -C "email" # 生成ssh
+
+scp local_file remote_username@remote_ip:remote_folder
 	
 配置文件在 /etc/ssh/sshd_config, service sshd restart 重启生效配置
 
